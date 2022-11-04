@@ -10,7 +10,7 @@ import (
 
 type conn struct {
 	bus           *Bus
-	txAddr        Addr
+	addr          Addr
 	fd            int
 	readDeadline  time.Time
 	writeDeadline time.Time
@@ -63,10 +63,13 @@ func (c *conn) Close() error {
 }
 
 // LocalAddr returns the local network address, if known.
-func (c *conn) LocalAddr() net.Addr { return c.bus.LocalAddr() }
+func (c *conn) LocalAddr() net.Addr { return c.addr }
 
 // RemoteAddr returns the remote network address, if known.
-func (c *conn) RemoteAddr() net.Addr { return c.txAddr }
+func (c *conn) RemoteAddr() net.Addr {
+	// remote addr is the same as ours, but with swapped tx/rx ids
+	return NewAddr(c.addr.TxID, c.addr.RxID)
+}
 
 // SetDeadline sets the read and write deadlines associated
 // with the connection. It is equivalent to calling both
