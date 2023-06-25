@@ -59,7 +59,7 @@ func (c *FileConn) Close() error {
 	return AsNetOpError(err, c, "close")
 }
 
-func AsNetOpError(err error, conn net.Conn, op string) *net.OpError {
+func AsNetOpError(err error, conn net.Conn, op string) error {
 	if err == nil {
 		return nil
 	}
