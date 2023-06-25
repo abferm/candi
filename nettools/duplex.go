@@ -1,10 +1,27 @@
-package isotp
+package nettools
 
 import (
 	"errors"
+	"fmt"
 	"net"
 	"time"
 )
+
+type DuplexAddr struct {
+	Read, Write net.Addr
+}
+
+func (a *DuplexAddr) Network() string {
+	if a.Read.Network() == a.Write.Network() {
+		return a.Read.Network()
+	} else {
+		return "read:" + a.Read.Network() + "+" + "write:" + a.Write.Network()
+	}
+}
+
+func (a *DuplexAddr) String() string {
+	return fmt.Sprintf("duplex{read:%s, write:%s}", a.Read, a.Write)
+}
 
 // Duplex pairs a set of connections together and uses one for read
 // opperations and the other for write operations.
@@ -42,12 +59,20 @@ func (c *duplex) Close() error {
 }
 
 // LocalAddr returns the local network address, if known.
-func (c *duplex) LocalAddr() net.Addr { return c.read.LocalAddr() }
+func (c *duplex) LocalAddr() net.Addr {
+	return &DuplexAddr{
+		Read:  c.read.LocalAddr(),
+		Write: c.write.LocalAddr(),
+	}
+}
 
 // RemoteAddr returns the remote network address, if known.
 func (c *duplex) RemoteAddr() net.Addr {
-	// remote addr is the remote addr of the write connection
-	return c.write.RemoteAddr()
+	return &DuplexAddr{
+		// note crossover
+		Write: c.read.RemoteAddr(),
+		Read:  c.write.RemoteAddr(),
+	}
 }
 
 // SetDeadline sets the read and write deadlines associated

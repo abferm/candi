@@ -1,4 +1,4 @@
-package isotp_test
+package nettools_test
 
 import (
 	"bytes"
@@ -8,7 +8,7 @@ import (
 
 	"golang.org/x/sync/errgroup"
 
-	"github.com/abferm/candi/isotp"
+	"github.com/abferm/candi/nettools"
 )
 
 func TestDuplex(t *testing.T) {
@@ -16,7 +16,7 @@ func TestDuplex(t *testing.T) {
 	bIn, bOut := net.Pipe()
 
 	// instanciate a duplexed connection that reads from aOut and writes to bIn
-	duplex := isotp.Duplex(aOut, bIn)
+	duplex := nettools.Duplex(aOut, bIn)
 
 	readExpected := []byte("read test")
 	writeExpected := []byte("write test")

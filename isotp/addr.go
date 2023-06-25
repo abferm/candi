@@ -2,7 +2,6 @@ package isotp
 
 import (
 	"fmt"
-	"net"
 
 	"golang.org/x/sys/unix"
 )
@@ -22,7 +21,7 @@ func NewAddr(RxID, TxID uint32) Addr {
 }
 
 func (a Addr) Network() string { return network_isotp }
-func (a Addr) String() string  { return fmt.Sprintf("%s{rx:%d,tx:%d", network_isotp, a.RxID, a.TxID) }
+func (a Addr) String() string  { return fmt.Sprintf("%s{rx:%d,tx:%d}", network_isotp, a.RxID, a.TxID) }
 func (a Addr) SocketAddr(ifIndex int) *unix.SockaddrCAN {
 	return &unix.SockaddrCAN{
 		Ifindex: ifIndex,
@@ -31,7 +30,10 @@ func (a Addr) SocketAddr(ifIndex int) *unix.SockaddrCAN {
 	}
 }
 
-type isotpAddr interface {
-	net.Addr
-	SocketAddr(ifIndex int) *unix.SockaddrCAN
+func (a Addr) Remote() Addr {
+	return Addr{
+		// remote addr is the same as ours, but with swapped tx/rx ids
+		RxID: a.TxID,
+		TxID: a.RxID,
+	}
 }

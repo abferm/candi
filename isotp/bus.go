@@ -3,8 +3,10 @@ package isotp
 import (
 	"fmt"
 	"net"
+	"os"
 
 	"github.com/abferm/candi"
+	"github.com/abferm/candi/nettools"
 	"golang.org/x/sys/unix"
 )
 
@@ -45,15 +47,15 @@ func (bus Bus) Dial(addr net.Addr) (net.Conn, error) {
 
 	socAddr := tpAddr.SocketAddr(bus.iface.Index)
 
+	// put fd in non-blocking mode so the created file will be registered by the runtime poller (Go >= 1.12)
+	if err = unix.SetNonblock(fd, true); err != nil {
+		return nil, fmt.Errorf("set nonblock: %w", err)
+	}
+
 	err = unix.Bind(fd, socAddr)
 	if err != nil {
 		unix.Close(fd)
 		return nil, fmt.Errorf("bind failed: %w", err)
 	}
-
-	return &conn{
-		bus:  &bus,
-		addr: tpAddr,
-		fd:   fd,
-	}, nil
+	return nettools.NewFileConn(os.NewFile(uintptr(fd), addr.String()), tpAddr, tpAddr.Remote()), nil
 }
