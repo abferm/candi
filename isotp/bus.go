@@ -24,6 +24,7 @@ func BusByName(name string) (*Bus, error) {
 	}, nil
 }
 
+// Dial creates a connection based on a single CAN ID pair
 func (bus Bus) Dial(addr net.Addr) (net.Conn, error) {
 	if addr.Network() != network_isotp {
 		return nil, fmt.Errorf("address specifies wrong netowrk type: %q", addr.Network())
@@ -58,4 +59,21 @@ func (bus Bus) Dial(addr net.Addr) (net.Conn, error) {
 		return nil, fmt.Errorf("bind failed: %w", err)
 	}
 	return nettools.NewFileConn(os.NewFile(uintptr(fd), addr.String()), tpAddr, tpAddr.Remote()), nil
+}
+
+// DialDuplex creates a connection based on two CAN ID pairs, one for
+// read and one for write.
+// This is useful for bi-directional communication with devices that
+// do not support read/write with the same CAN ID pair.
+func (bus Bus) DialDuplex(read, write net.Addr) (net.Conn, error) {
+	readConn, err := bus.Dial(read)
+	if err != nil {
+		return nil, fmt.Errorf("error dialing read connection: %w", err)
+	}
+	writeConn, err := bus.Dial(write)
+	if err != nil {
+		readConn.Close()
+		return nil, fmt.Errorf("error dialing write connection: %w", err)
+	}
+	return nettools.Duplex(readConn, writeConn), nil
 }
